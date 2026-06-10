@@ -111,6 +111,9 @@ class MyApp extends StatelessWidget {
       initialRoute: AppRoutes.login,
       getPages: AppRoutes.pages,
       debugShowCheckedModeBanner: false,
+      // Transición suave y profesional al cambiar de pantalla.
+      defaultTransition: Transition.rightToLeftWithFade,
+      transitionDuration: const Duration(milliseconds: 320),
       // Propaga cada cambio de ruta al RxString para que el FAB sepa cuándo
       // ocultarse en login/register.
       routingCallback: (routing) {

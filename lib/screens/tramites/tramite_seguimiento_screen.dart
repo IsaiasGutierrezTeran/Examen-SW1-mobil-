@@ -290,6 +290,24 @@ class _TramiteSeguimientoScreenState extends State<TramiteSeguimientoScreen> {
     }
   }
 
+  /// Ícono Material (no emoji) para el estado global del trámite, usado en el
+  /// EstadoChip de la cabecera. El texto lo sigue dando el servicio.
+  IconData _iconoEstadoTramite(String estado) {
+    final e = estado.toLowerCase();
+    if (e.contains('aprob') || e.contains('finaliz') || e.contains('complet')) {
+      return Icons.check_circle_rounded;
+    }
+    if (e.contains('rechaz')) return Icons.cancel_rounded;
+    if (e.contains('cancel')) return Icons.block_rounded;
+    if (e.contains('observ') || e.contains('devuel')) {
+      return Icons.warning_amber_rounded;
+    }
+    if (e.contains('curso') || e.contains('proceso')) {
+      return Icons.autorenew_rounded;
+    }
+    return Icons.adjust_rounded;
+  }
+
   Widget _buildCardEstadoGeneral(BuildContext context) {
     final color = tramitesSeguimientoService.getColorEstadoFlutter(estado!.estado);
     final progreso = _progresoEfectivo;
@@ -328,8 +346,9 @@ class _TramiteSeguimientoScreenState extends State<TramiteSeguimientoScreen> {
               ),
               const SizedBox(width: AppSpacing.sm),
               EstadoChip(
-                '${tramitesSeguimientoService.getIconoEstado(estado!.estado)} ${tramitesSeguimientoService.getTextoEstado(estado!.estado)}',
+                tramitesSeguimientoService.getTextoEstado(estado!.estado),
                 color: color,
+                icon: _iconoEstadoTramite(estado!.estado),
               ),
             ],
           ),
@@ -426,10 +445,21 @@ class _TramiteSeguimientoScreenState extends State<TramiteSeguimientoScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '⏳ Etapa Actual',
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  Row(
+                    children: const [
+                      Icon(Icons.schedule_rounded,
+                          size: 15, color: AppColors.compuerta),
+                      SizedBox(width: 6),
+                      Text(
+                        'Etapa Actual',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: AppColors.compuerta,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
@@ -737,6 +767,20 @@ class _TramiteSeguimientoScreenState extends State<TramiteSeguimientoScreen> {
     );
   }
 
+  /// ¿El nodo ya quedó atrás (completado/derivado)? Sirve para pintar de verde
+  /// el tramo de la línea que conecta pasos ya superados.
+  bool _esNodoCompletado(FlujoNodo nodo) {
+    if (nodo.esActual) return false;
+    switch (nodo.estadoSeccion) {
+      case 'Derivada':
+      case 'completada':
+      case 'completado':
+        return true;
+      default:
+        return false;
+    }
+  }
+
   Widget _buildNodoFlujo(FlujoNodo nodo, bool esUltimo) {
     // Fork/Join son nodos TÉCNICOS (división/unión de ramas paralelas): el
     // usuario no debería verlos como un "paso". Los mostramos como un conector
@@ -747,54 +791,157 @@ class _TramiteSeguimientoScreenState extends State<TramiteSeguimientoScreen> {
     final color = _colorPorEstadoNodo(nodo);
     final icono = _iconoPorEstadoNodo(nodo);
     final esActividad = nodo.tipo == 'actividad';
+    final completado = _esNodoCompletado(nodo);
+    // Pasos futuros (aún bloqueados/pendientes y no observados) se muestran
+    // "apagados": círculo hueco con borde, para un timeline más legible.
+    final esFuturo = !nodo.esActual &&
+        !completado &&
+        color == AppColors.textoSuave;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Indicador y línea vertical conectora
-        Column(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                border: nodo.esActual
-                    ? Border.all(color: AppColors.primary, width: 3)
-                    : null,
-              ),
-              child: Icon(icono, color: Colors.white, size: 20),
-            ),
-            if (!esUltimo)
-              Container(
-                width: 2,
-                height: esActividad ? 80 : 40,
-                color: AppColors.borde,
-              ),
-          ],
-        ),
-        const SizedBox(width: AppSpacing.sm + AppSpacing.xs),
-        // Tarjeta del nodo
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm + AppSpacing.xs),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.superficie,
-                borderRadius: BorderRadius.circular(AppRadius.card),
-                border: Border.all(
-                  color: nodo.esActual ? AppColors.primary : AppColors.borde,
-                  width: nodo.esActual ? 2 : 1,
+    // Color del tramo de línea: verde si este paso ya se superó, índigo si es
+    // el paso actual (degradado hacia lo que viene), gris si aún no se llega.
+    final colorLinea = completado
+        ? AppColors.exito
+        : (nodo.esActual ? AppColors.primary : AppColors.borde);
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Indicador y línea vertical conectora
+          SizedBox(
+            width: 44,
+            child: Column(
+              children: [
+                _buildIndicadorNodo(
+                  icono: icono,
+                  color: color,
+                  esActual: nodo.esActual,
+                  esFuturo: esFuturo,
                 ),
-              ),
-              child: esActividad
-                  ? _buildNodoActividad(nodo, color)
-                  : _buildNodoSimple(nodo, color),
+                if (!esUltimo)
+                  Expanded(
+                    child: Container(
+                      width: 3,
+                      margin: const EdgeInsets.symmetric(vertical: 2),
+                      decoration: BoxDecoration(
+                        color: colorLinea == AppColors.borde
+                            ? AppColors.borde
+                            : colorLinea.withValues(alpha: 0.55),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
+          const SizedBox(width: AppSpacing.sm + AppSpacing.xs),
+          // Tarjeta del nodo
+          Expanded(
+            child: Padding(
+              padding:
+                  const EdgeInsets.only(bottom: AppSpacing.sm + AppSpacing.xs),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: nodo.esActual
+                      ? AppColors.primary.withValues(alpha: 0.04)
+                      : AppColors.superficie,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(
+                    color: nodo.esActual
+                        ? AppColors.primary
+                        : (completado
+                            ? AppColors.exito.withValues(alpha: 0.35)
+                            : AppColors.borde),
+                    width: nodo.esActual ? 1.6 : 1,
+                  ),
+                  boxShadow: nodo.esActual
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.16),
+                            blurRadius: 18,
+                            offset: const Offset(0, 6),
+                          ),
+                        ]
+                      : const [
+                          BoxShadow(
+                            color: Color(0x0A1E2952),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                ),
+                child: esActividad
+                    ? _buildNodoActividad(nodo, color)
+                    : _buildNodoSimple(nodo, color),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Círculo indicador del timeline. El paso ACTUAL se resalta con el gradiente
+  /// de marca + anillo + sombra; los completados van rellenos del color
+  /// semántico; los futuros se muestran "apagados" (hueco con borde).
+  Widget _buildIndicadorNodo({
+    required IconData icono,
+    required Color color,
+    required bool esActual,
+    required bool esFuturo,
+  }) {
+    if (esActual) {
+      return Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: AppColors.brandGradient,
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.25),
+            width: 4,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.40),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
-      ],
+        child: Icon(icono, color: Colors.white, size: 22),
+      );
+    }
+    if (esFuturo) {
+      // Paso aún no alcanzado: círculo hueco, apagado.
+      return Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.fondo,
+          border: Border.all(color: AppColors.borde, width: 2),
+        ),
+        child: Icon(icono, color: AppColors.textoSuave, size: 18),
+      );
+    }
+    // Completado / en bandeja / observado: relleno con su color semántico.
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.30),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Icon(icono, color: Colors.white, size: 20),
     );
   }
 
@@ -834,14 +981,29 @@ class _TramiteSeguimientoScreenState extends State<TramiteSeguimientoScreen> {
           if (nodo.observacion != null && nodo.observacion!.trim().isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                '⚠️ ${nodo.observacion}',
-                style:
-                    const TextStyle(fontSize: 11, color: AppColors.observado),
-              ),
+              child: _buildObservacionInline(nodo.observacion!),
             ),
         ],
       ),
+    );
+  }
+
+  /// Observación corta en línea: ícono de advertencia + texto en color naranja
+  /// semántico (reemplaza el antiguo prefijo "⚠️").
+  Widget _buildObservacionInline(String observacion) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.warning_amber_rounded,
+            size: 14, color: AppColors.observado),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            observacion,
+            style: const TextStyle(fontSize: 11, color: AppColors.observado),
+          ),
+        ),
+      ],
     );
   }
 
@@ -911,11 +1073,7 @@ class _TramiteSeguimientoScreenState extends State<TramiteSeguimientoScreen> {
           if (nodo.observacion != null && nodo.observacion!.trim().isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                '⚠️ ${nodo.observacion}',
-                style:
-                    const TextStyle(fontSize: 11, color: AppColors.observado),
-              ),
+              child: _buildObservacionInline(nodo.observacion!),
             ),
         ],
       ),
@@ -926,45 +1084,58 @@ class _TramiteSeguimientoScreenState extends State<TramiteSeguimientoScreen> {
   /// como un "paso", solo un punto pequeño + un texto en gris.
   Widget _buildConectorParalelo(FlujoNodo nodo, bool esUltimo) {
     final esFork = nodo.tipo == 'fork';
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 40,
-          child: Column(
-            children: [
-              Container(
-                width: 18,
-                height: 18,
-                decoration: const BoxDecoration(
-                  color: AppColors.textoSuave,
-                  shape: BoxShape.circle,
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 44,
+            child: Column(
+              children: [
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: AppColors.fondo,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.borde, width: 2),
+                  ),
+                  child: Icon(esFork ? Icons.call_split : Icons.call_merge,
+                      size: 12, color: AppColors.textoSuave),
                 ),
-                child: Icon(esFork ? Icons.call_split : Icons.call_merge,
-                    size: 11, color: Colors.white),
-              ),
-              if (!esUltimo)
-                Container(width: 2, height: 26, color: AppColors.borde),
-            ],
+                if (!esUltimo)
+                  Expanded(
+                    child: Container(
+                      width: 3,
+                      margin: const EdgeInsets.symmetric(vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.borde,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: AppSpacing.sm + AppSpacing.xs),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 1, bottom: AppSpacing.sm + AppSpacing.xs),
-            child: Text(
-              esFork
-                  ? 'El trámite continúa en varias tareas a la vez'
-                  : 'Las tareas paralelas se reúnen para continuar',
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textoSuave,
-                fontStyle: FontStyle.italic,
+          const SizedBox(width: AppSpacing.sm + AppSpacing.xs),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                  top: 2, bottom: AppSpacing.sm + AppSpacing.xs),
+              child: Text(
+                esFork
+                    ? 'El trámite continúa en varias tareas a la vez'
+                    : 'Las tareas paralelas se reúnen para continuar',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textoSuave,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1192,18 +1363,46 @@ class _TramiteSeguimientoScreenState extends State<TramiteSeguimientoScreen> {
 
   Widget _buildBadgeEstado(FlujoNodo nodo, Color color) {
     final texto = _textoEstadoNodo(nodo);
+    // El paso actual usa un chip relleno con gradiente de marca; el resto, una
+    // píldora suave teñida del color semántico (look más limpio y consistente).
+    if (nodo.esActual) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          gradient: AppColors.brandGradient,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.30),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: const Text(
+          'ACTUAL',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            letterSpacing: 0.5,
+          ),
+        ),
+      );
+    }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(12),
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         texto,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.bold,
-          color: Colors.white,
+          color: color,
+          letterSpacing: 0.3,
         ),
       ),
     );

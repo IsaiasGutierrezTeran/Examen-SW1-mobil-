@@ -175,7 +175,9 @@ class _MisTramitesScreenState extends State<MisTramitesScreen> {
               return DropdownMenuItem(
                 value: estado,
                 child: Text(
-                  '${tramitesSeguimientoService.getIconoEstado(estado)} ${tramitesSeguimientoService.getTextoEstado(estado).toUpperCase()}',
+                  tramitesSeguimientoService
+                      .getTextoEstado(estado)
+                      .toUpperCase(),
                 ),
               );
             }),
@@ -319,16 +321,33 @@ class _MisTramitesScreenState extends State<MisTramitesScreen> {
             const SizedBox(height: AppSpacing.sm),
 
             // Fechas
-            Text(
-              '📅 Creado: ${_formatoFecha(tramite.fechaInicio)}',
-              style:
-                  const TextStyle(fontSize: 11, color: AppColors.textoSuave),
+            Row(
+              children: [
+                const Icon(Icons.event_outlined,
+                    size: 13, color: AppColors.textoSuave),
+                const SizedBox(width: 6),
+                Text(
+                  'Creado: ${_formatoFecha(tramite.fechaInicio)}',
+                  style: const TextStyle(
+                      fontSize: 11, color: AppColors.textoSuave),
+                ),
+              ],
             ),
-            if (tramite.fechaCierreReal != null)
-              Text(
-                '✓ Cerrado: ${_formatoFecha(tramite.fechaCierreReal!)}',
-                style: const TextStyle(fontSize: 11, color: AppColors.exito),
+            if (tramite.fechaCierreReal != null) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Row(
+                children: [
+                  const Icon(Icons.check_circle_outline,
+                      size: 13, color: AppColors.exito),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Cerrado: ${_formatoFecha(tramite.fechaCierreReal!)}',
+                    style:
+                        const TextStyle(fontSize: 11, color: AppColors.exito),
+                  ),
+                ],
               ),
+            ],
           ],
         ),
       ),

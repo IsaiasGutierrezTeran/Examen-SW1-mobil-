@@ -125,19 +125,22 @@ class _TramiteDetalleScreenState extends State<TramiteDetalleScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildInfoRow(
-                          '⏱ Duración Límite',
+                          Icons.schedule,
+                          'Duración Límite',
                           '${politica.duracionDiasLimite} días',
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         _buildInfoRow(
-                          '✓ Aprobación',
+                          Icons.verified_user_outlined,
+                          'Aprobación',
                           politica.requiereAprobacion
                               ? 'Requerida'
                               : 'No requerida',
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         _buildInfoRow(
-                          '📅 Creado',
+                          Icons.event_outlined,
+                          'Creado',
                           politica.fechaCreacion,
                         ),
                       ],
@@ -307,10 +310,12 @@ class _TramiteDetalleScreenState extends State<TramiteDetalleScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Icon(icon, size: 16, color: AppColors.textoSuave),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           flex: 2,
           child: Text(

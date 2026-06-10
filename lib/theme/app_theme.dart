@@ -6,20 +6,30 @@ import 'package:flutter/material.dart';
 /// acentos SEMÁNTICOS consistentes — en vez de los colores arcoíris que tenía
 /// cada botón. Más constantes de espaciado y radios para un look uniforme.
 class AppColors {
-  static const Color primary = Color(0xFF5E35B1); // deepPurple 600
-  static const Color primaryDark = Color(0xFF4527A0);
+  // Marca: índigo → celeste (igual que la web MOTOR).
+  static const Color primary = Color(0xFF4F46E5); // índigo
+  static const Color primaryDark = Color(0xFF4338CA);
+  static const Color accent = Color(0xFF06B6D4); // celeste/cian
+  static const Color accentLight = Color(0xFF22D3EE);
+
+  /// Gradiente de marca (botones destacados, logo, cabeceras).
+  static const Gradient brandGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
+  );
 
   // Acentos semánticos (usar SIEMPRE estos, no colores sueltos):
-  static const Color compuerta = Color(0xFF1565C0); // azul · avanzó, pide docs
+  static const Color compuerta = Color(0xFF0891B2); // celeste · avanzó, pide docs
   static const Color observado = Color(0xFFE65100); // naranja · corregir
-  static const Color exito = Color(0xFF2E7D32); // verde · ok
-  static const Color ia = Color(0xFF6A1B9A); // violeta · IA
-  static const Color peligro = Color(0xFFC62828); // rojo · error
+  static const Color exito = Color(0xFF10B981); // verde · ok
+  static const Color ia = Color(0xFF6366F1); // índigo claro · IA
+  static const Color peligro = Color(0xFFE11D48); // rojo · error
 
-  static const Color fondo = Color(0xFFF5F4FA); // fondo de scaffold
+  static const Color fondo = Color(0xFFF4F7FB); // fondo de scaffold
   static const Color superficie = Colors.white;
-  static const Color textoSuave = Color(0xFF6B6B76);
-  static const Color borde = Color(0xFFE6E3F0);
+  static const Color textoSuave = Color(0xFF64748B);
+  static const Color borde = Color(0xFFE6EBF3);
 }
 
 /// Espaciado en una escala de 4.
@@ -45,6 +55,9 @@ ThemeData buildAppTheme() {
   final scheme = ColorScheme.fromSeed(
     seedColor: AppColors.primary,
     brightness: Brightness.light,
+  ).copyWith(
+    primary: AppColors.primary,
+    secondary: AppColors.accent,
   );
 
   return ThemeData(
@@ -52,6 +65,40 @@ ThemeData buildAppTheme() {
     colorScheme: scheme,
     scaffoldBackgroundColor: AppColors.fondo,
     fontFamily: 'Roboto',
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: Colors.white,
+      elevation: 3,
+      height: 66,
+      surfaceTintColor: Colors.transparent,
+      indicatorColor: AppColors.primary.withValues(alpha: 0.12),
+      indicatorShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      labelTextStyle: WidgetStateProperty.resolveWith(
+        (states) => TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: states.contains(WidgetState.selected)
+              ? AppColors.primary
+              : AppColors.textoSuave,
+        ),
+      ),
+      iconTheme: WidgetStateProperty.resolveWith(
+        (states) => IconThemeData(
+          color: states.contains(WidgetState.selected)
+              ? AppColors.primary
+              : AppColors.textoSuave,
+        ),
+      ),
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Colors.white,
+      selectedItemColor: AppColors.primary,
+      unselectedItemColor: AppColors.textoSuave,
+      type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+      elevation: 8,
+    ),
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.fondo,
       foregroundColor: Color(0xFF1D1B23),

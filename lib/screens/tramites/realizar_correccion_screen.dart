@@ -424,12 +424,19 @@ class _RealizarCorreccionScreenState extends State<RealizarCorreccionScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Tu trámite avanzó ✅',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.compuerta,
-                  ),
+                Row(
+                  children: const [
+                    Text(
+                      'Tu trámite avanzó',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.compuerta,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(Icons.check_circle,
+                        size: 16, color: AppColors.compuerta),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 const Text(

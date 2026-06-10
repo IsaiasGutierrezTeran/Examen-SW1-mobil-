@@ -9,9 +9,9 @@
 /// Cambia `apiUrl` según el caso de uso. Para encontrar tu IP local en Windows:
 ///     ipconfig | findstr IPv4
 class Environment {
-  /// Producción: el backend desplegado en AWS, detrás de nginx con TLS.
-  static const String apiUrl = 'https://api.ficctuagrmbolivia.online/api';
-  static const bool isProduction = true;
+  /// Desarrollo local: backend en la PC, accedido desde el emulador Android (10.0.2.2).
+  static const String apiUrl = 'http://10.0.2.2:8080/api';
+  static const bool isProduction = false;
 
   // ─── Alternativas comentadas (descomenta la que necesites para desarrollo) ─
   // Producción (EC2 + dominio TLS):     'https://api.ficctuagrmbolivia.online/api'

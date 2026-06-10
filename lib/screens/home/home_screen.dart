@@ -6,6 +6,9 @@ import '../../services/tramites_seguimiento_service.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/ui_kit.dart';
+import '../tramites/mis_tramites_screen.dart';
+import '../tramites/catalogo_tramites_screen.dart';
+import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -19,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _noLeidas = 0;
   int _compuertaCount = 0;
   int _observadoCount = 0;
+  int _index = 0;
 
   @override
   void initState() {
@@ -85,6 +89,52 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      body: IndexedStack(
+        index: _index,
+        children: [
+          _inicioTab(),
+          const MisTramitesScreen(),
+          const CatalogoTramitesScreen(),
+          const ProfileScreen(),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _index,
+        onDestinationSelected: (i) {
+          setState(() => _index = i);
+          if (i == 0) {
+            _cargarNoLeidas();
+            _cargarPendientes();
+          }
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
+            label: 'Inicio',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.assignment_outlined),
+            selectedIcon: Icon(Icons.assignment_rounded),
+            label: 'Trámites',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.travel_explore_outlined),
+            selectedIcon: Icon(Icons.travel_explore_rounded),
+            label: 'Explorar',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person_rounded),
+            label: 'Perfil',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _inicioTab() {
+    return Scaffold(
       appBar: AppBar(
         title: const Text('Inicio'),
         actions: [
@@ -120,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               // Saludo
               Text(
-                'Hola, ${usuario.nombre} 👋',
+                'Hola, ${usuario.nombre}',
                 style: const TextStyle(
                     fontSize: 24, fontWeight: FontWeight.w800),
               ),

@@ -41,10 +41,23 @@ class _ChatAgenteIAState extends State<ChatAgenteIA> {
     _tramiteId = widget.tramiteIdOpcional ?? _extraerTramiteIdDeArgs();
     _mensajes.add(_Mensaje(
       texto:
-          '¡Hola! Soy tu asistente virtual. Puedo guiarte por tus trámites, '
-          'documentos y notificaciones. ¿En qué te ayudo?',
+          '¡Hola! Soy tu asistente virtual. Te guío paso a paso para hacer '
+          'los trámites disponibles (conexión, internet, fibra, soporte, etc.). '
+          'Contame qué necesitás o elegí una opción de abajo.',
       esCliente: false,
     ));
+  }
+
+  static const List<String> _sugerencias = [
+    '¿Qué trámites puedo hacer?',
+    '¿Cómo inicio un trámite?',
+    'Ver mis trámites',
+    'Necesito subir un documento',
+  ];
+
+  Future<void> _enviarTexto(String texto) async {
+    _ctrl.text = texto;
+    await _enviar();
   }
 
   String _modeloDesdeRuta(String ruta) {
@@ -154,29 +167,30 @@ class _ChatAgenteIAState extends State<ChatAgenteIA> {
       ),
       child: Column(
         children: [
-          // Cabecera
+          // Cabecera con gradiente de marca
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: const BoxDecoration(
-              color: AppColors.ia,
+              gradient: AppColors.brandGradient,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 34,
-                  height: 34,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.white.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.smart_toy, color: Colors.white, size: 20),
+                  child: const Icon(Icons.smart_toy_rounded,
+                      color: Colors.white, size: 22),
                 ),
-                const SizedBox(width: 10),
-                const Column(
+                const SizedBox(width: 11),
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Asistente virtual',
                       style: TextStyle(
                         color: Colors.white,
@@ -184,15 +198,28 @@ class _ChatAgenteIAState extends State<ChatAgenteIA> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text(
-                      'Te ayuda con tus trámites',
-                      style: TextStyle(color: Colors.white70, fontSize: 11.5),
+                    Row(
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF4ADE80),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        const Text(
+                          'En línea · te guía con tus trámites',
+                          style: TextStyle(color: Colors.white70, fontSize: 11),
+                        ),
+                      ],
                     ),
                   ],
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
                   onPressed: () => Get.back(),
                 ),
               ],
@@ -201,28 +228,16 @@ class _ChatAgenteIAState extends State<ChatAgenteIA> {
 
           // Mensajes
           Expanded(
-            child: ListView.builder(
+            child: ListView(
               controller: _scroll,
               padding: const EdgeInsets.all(AppSpacing.md),
-              itemCount: _mensajes.length,
-              itemBuilder: (context, i) => _buildBurbuja(_mensajes[i]),
+              children: [
+                for (final m in _mensajes) _buildBurbuja(m),
+                if (_esperando) _buildEscribiendo(),
+                if (!_esperando && _mensajes.length <= 1) _buildSugerencias(),
+              ],
             ),
           ),
-
-          if (_esperando)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'El asistente está escribiendo…',
-                  style: TextStyle(
-                      color: AppColors.textoSuave,
-                      fontSize: 12,
-                      fontStyle: FontStyle.italic),
-                ),
-              ),
-            ),
 
           // Input
           Container(
@@ -252,12 +267,27 @@ class _ChatAgenteIAState extends State<ChatAgenteIA> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                CircleAvatar(
-                  backgroundColor:
-                      _esperando ? AppColors.textoSuave : AppColors.ia,
-                  child: IconButton(
-                    icon: const Icon(Icons.send, color: Colors.white, size: 18),
-                    onPressed: _esperando ? null : _enviar,
+                GestureDetector(
+                  onTap: _esperando ? null : _enviar,
+                  child: Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      gradient: _esperando ? null : AppColors.brandGradient,
+                      color: _esperando ? AppColors.borde : null,
+                      shape: BoxShape.circle,
+                      boxShadow: _esperando
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.4),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                    ),
+                    child: const Icon(Icons.send_rounded,
+                        color: Colors.white, size: 20),
                   ),
                 ),
               ],
@@ -282,21 +312,38 @@ class _ChatAgenteIAState extends State<ChatAgenteIA> {
         children: [
           Container(
             margin: const EdgeInsets.only(bottom: 6),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.72),
+                maxWidth: MediaQuery.of(context).size.width * 0.74),
             decoration: BoxDecoration(
-              color: m.esCliente
-                  ? AppColors.primary.withOpacity(0.1)
-                  : const Color(0xFFF0EEF7),
+              gradient: m.esCliente ? AppColors.brandGradient : null,
+              color: m.esCliente ? null : Colors.white,
+              border: m.esCliente
+                  ? null
+                  : Border.all(color: AppColors.borde),
               borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(16),
-                topRight: const Radius.circular(16),
-                bottomLeft: Radius.circular(m.esCliente ? 16 : 4),
-                bottomRight: Radius.circular(m.esCliente ? 4 : 16),
+                topLeft: const Radius.circular(18),
+                topRight: const Radius.circular(18),
+                bottomLeft: Radius.circular(m.esCliente ? 18 : 4),
+                bottomRight: Radius.circular(m.esCliente ? 4 : 18),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: (m.esCliente ? AppColors.primary : Colors.black)
+                      .withValues(alpha: m.esCliente ? 0.25 : 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Text(
+              m.texto,
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.35,
+                color: m.esCliente ? Colors.white : const Color(0xFF1D1B23),
               ),
             ),
-            child: Text(m.texto, style: const TextStyle(fontSize: 14)),
           ),
           if (mostrarAccion)
             Padding(
@@ -306,14 +353,132 @@ class _ChatAgenteIAState extends State<ChatAgenteIA> {
                 label: Text(m.accionLabel!),
                 onPressed: () => _ejecutarAccion(m),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.ia,
-                  side: const BorderSide(color: AppColors.ia),
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 ),
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  /// Burbuja "escribiendo" con puntos animados.
+  Widget _buildEscribiendo() {
+    return const Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: 10),
+        child: _TypingDots(),
+      ),
+    );
+  }
+
+  /// Chips de sugerencia (guía) que se muestran al inicio.
+  Widget _buildSugerencias() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: _sugerencias.map((s) {
+          return InkWell(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            onTap: _esperando ? null : () => _enviarTexto(s),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.25)),
+              ),
+              child: Text(
+                s,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+/// Tres puntos que pulsan para indicar que el asistente escribe.
+class _TypingDots extends StatefulWidget {
+  const _TypingDots();
+
+  @override
+  State<_TypingDots> createState() => _TypingDotsState();
+}
+
+class _TypingDotsState extends State<_TypingDots>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.borde),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(18),
+          topRight: Radius.circular(18),
+          bottomLeft: Radius.circular(4),
+          bottomRight: Radius.circular(18),
+        ),
+      ),
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (context, _) {
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(3, (i) {
+              final t = (_c.value + i * 0.25) % 1.0;
+              final escala = 0.6 + 0.4 * (1 - (t - 0.5).abs() * 2).clamp(0.0, 1.0);
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: Transform.scale(
+                  scale: escala,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(
+                          alpha: 0.4 + 0.6 * escala),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              );
+            }),
+          );
+        },
       ),
     );
   }

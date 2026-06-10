@@ -132,34 +132,42 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   const SizedBox(height: AppSpacing.xl),
 
-                  // Logo
+                  // Logo (libro con gradiente de marca)
                   Center(
                     child: Container(
-                      width: 76,
-                      height: 76,
+                      width: 84,
+                      height: 84,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(AppRadius.card),
+                        gradient: AppColors.brandGradient,
+                        borderRadius: BorderRadius.circular(AppRadius.card + 6),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.45),
+                            blurRadius: 26,
+                            offset: const Offset(0, 12),
+                          ),
+                        ],
                       ),
-                      child: const Icon(Icons.bolt_rounded,
-                          size: 40, color: AppColors.primary),
+                      child: const Icon(Icons.menu_book_rounded,
+                          size: 44, color: Colors.white),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
 
-                  // Título
+                  // Marca
                   const Text(
-                    'Bienvenido',
+                    'MOTOR',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 26,
+                      fontSize: 30,
                       fontWeight: FontWeight.w800,
+                      letterSpacing: 3,
                       color: Color(0xFF1D1B23),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   const Text(
-                    'Inicia sesión con tu cuenta',
+                    'Gestión de Trámites',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14, color: AppColors.textoSuave),
                   ),
