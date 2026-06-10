@@ -169,15 +169,55 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Saludo
-              Text(
-                'Hola, ${usuario.nombre}',
-                style: const TextStyle(
-                    fontSize: 24, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                'Bienvenido de nuevo',
-                style: TextStyle(fontSize: 14, color: AppColors.textoSuave),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  gradient: AppColors.brandGradient,
+                  borderRadius: BorderRadius.circular(AppRadius.card + 4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.35),
+                      blurRadius: 22,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Hola, ${usuario.nombre}',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Bienvenido de nuevo a MOTOR',
+                            style: TextStyle(
+                                fontSize: 13, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(Icons.menu_book_rounded,
+                          color: Colors.white, size: 28),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
 
