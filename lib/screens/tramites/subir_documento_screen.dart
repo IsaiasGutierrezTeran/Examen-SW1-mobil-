@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../controllers/network_controller.dart';
 import '../../models/flujo_completo_model.dart';
 import '../../services/adjuntos_service.dart';
@@ -31,6 +32,7 @@ class _SubirDocumentoScreenState extends State<SubirDocumentoScreen> {
   late Map<String, String> args;
 
   File? _imagenSeleccionada;
+  bool _esImagen = true; // false = documento (pdf/word/etc.) -> sin preview
   bool _subiendo = false;
   final ImagePicker _picker = ImagePicker();
 
@@ -69,7 +71,29 @@ class _SubirDocumentoScreenState extends State<SubirDocumentoScreen> {
       imageQuality: 80,
       maxWidth: 1920,
     );
-    if (picked != null) setState(() => _imagenSeleccionada = File(picked.path));
+    if (picked != null) {
+      setState(() {
+        _imagenSeleccionada = File(picked.path);
+        _esImagen = true;
+      });
+    }
+  }
+
+  /// Selecciona un documento (PDF, Word, Excel, etc.) desde el almacenamiento.
+  Future<void> _seleccionarArchivo() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png'],
+      withData: false,
+    );
+    final path = result?.files.single.path;
+    if (path != null) {
+      final ext = path.split('.').last.toLowerCase();
+      setState(() {
+        _imagenSeleccionada = File(path);
+        _esImagen = ext == 'jpg' || ext == 'jpeg' || ext == 'png';
+      });
+    }
   }
 
   Future<void> _subir() async {
@@ -243,13 +267,33 @@ class _SubirDocumentoScreenState extends State<SubirDocumentoScreen> {
                     ),
                   ),
                   child: _imagenSeleccionada != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.card),
-                          child: Image.file(
-                            _imagenSeleccionada!,
-                            fit: BoxFit.contain,
-                          ),
-                        )
+                      ? (_esImagen
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(AppRadius.card),
+                              child: Image.file(
+                                _imagenSeleccionada!,
+                                fit: BoxFit.contain,
+                              ),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.description,
+                                    size: 64, color: AppColors.primary),
+                                const SizedBox(height: AppSpacing.sm),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.md),
+                                  child: Text(
+                                    _imagenSeleccionada!.path.split('/').last,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ),
+                              ],
+                            ))
                       : Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -294,6 +338,14 @@ class _SubirDocumentoScreenState extends State<SubirDocumentoScreen> {
                     onPressed: _subiendo ? null : () => _seleccionarImagen(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library),
                     label: const Text('Galería'),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _subiendo ? null : _seleccionarArchivo,
+                    icon: const Icon(Icons.attach_file),
+                    label: const Text('Archivo'),
                   ),
                 ),
               ],
@@ -380,6 +432,14 @@ class _SubirDocumentoScreenState extends State<SubirDocumentoScreen> {
               onTap: () {
                 Navigator.pop(context);
                 _seleccionarImagen(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.attach_file),
+              title: const Text('Subir archivo (PDF, Word, Excel)'),
+              onTap: () {
+                Navigator.pop(context);
+                _seleccionarArchivo();
               },
             ),
           ],

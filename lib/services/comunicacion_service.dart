@@ -5,11 +5,13 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../config/environment.dart';
 import 'auth_service.dart';
+import 'faq_offline_service.dart';
 
 class ComunicacionService extends GetxService {
   late AuthService authService;
 
   final String _baseUrl = Environment.apiUrl;
+  final FaqOfflineService _faqOffline = FaqOfflineService();
 
   final RxList<dynamic> notificaciones = RxList<dynamic>();
   final RxBool isLoading = RxBool(false);
@@ -78,14 +80,13 @@ class ComunicacionService extends GetxService {
       if (response.statusCode == 200) {
         return json.decode(utf8.decode(response.bodyBytes));
       } else {
-        return {
-          'respuesta':
-              'Lo siento, el asistente virtual no está disponible en este momento.'
-        };
+        // Backend no disponible -> respuesta local (FAQ offline).
+        return {'respuesta': _faqOffline.responder(consulta), 'fuente': 'offline'};
       }
     } catch (e) {
-      print('❌ Error agente IA: $e');
-      return {'respuesta': 'Error de conexión con el asistente.'};
+      print('❌ Error agente IA (uso IA offline): $e');
+      // Sin conexión / timeout -> el asistente sigue respondiendo localmente.
+      return {'respuesta': _faqOffline.responder(consulta), 'fuente': 'offline'};
     }
   }
 }

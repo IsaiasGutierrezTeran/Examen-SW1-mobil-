@@ -1,20 +1,20 @@
 /// Configuración de ambiente — apunta al backend Spring Boot.
 ///
 /// Reglas según dónde corre la app:
-///   • Producción (EC2 + nginx TLS)       → https://api.ficctuagrmbolivia.online/api
-///   • Android USB / dispositivo físico   → IP de la PC en la red LAN
-///   • Emulador Android (AVD)             → http://10.0.2.2:8080/api
-///   • Chrome / Edge / Windows desktop    → http://localhost:8080/api
+///   • Producción AWS (EC2 + IP estática)  → http://3.233.132.212/api
+///   • Android USB / dispositivo físico    → IP de la PC en la red LAN
+///   • Emulador Android (AVD)              → http://10.0.2.2:8080/api
+///   • Chrome / Edge / Windows desktop     → http://localhost:8080/api
 ///
 /// Cambia `apiUrl` según el caso de uso. Para encontrar tu IP local en Windows:
 ///     ipconfig | findstr IPv4
 class Environment {
-  /// Desarrollo local: backend en la PC, accedido desde el emulador Android (10.0.2.2).
-  static const String apiUrl = 'http://10.0.2.2:8080/api';
-  static const bool isProduction = false;
+  /// Producción AWS: backend en la EC2 con IP estática (Elastic IP).
+  static const String apiUrl = 'http://3.233.132.212/api';
+  static const bool isProduction = true;
 
   // ─── Alternativas comentadas (descomenta la que necesites para desarrollo) ─
-  // Producción (EC2 + dominio TLS):     'https://api.ficctuagrmbolivia.online/api'
+  // Producción AWS (EC2 + IP estática): 'http://3.233.132.212/api'
   // Dispositivo físico por USB/WiFi:    'http://<IP-DE-TU-PC>:8080/api'
   // Emulador Android oficial:           'http://10.0.2.2:8080/api'
   // Web (Chrome/Edge) o Windows nativo: 'http://localhost:8080/api'
